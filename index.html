@@ -32,30 +32,30 @@
 
       function preload() {
         this.load.setBaseURL("http://labs.phaser.io");
-        
+
         this.load.image("ship", "assets/games/asteroids/ship.png");
         this.load.image("arrow", "assets/sprites/arrow.png");
-        this.load.image('bullet', 'assets/sprites/purple_ball.png');
+        this.load.image("bullet", "assets/sprites/purple_ball.png");
       }
 
       var targetShip;
       var seekingShip;
       var cursors;
+      var maxVelocity = 200;
 
       function create() {
-        targetShip = this.physics.add.image(400, 50, "ship");
+        targetShip = this.physics.add.image(800, 300, "ship");
         targetShip.setDamping(true);
         targetShip.setDrag(0.99);
-        targetShip.setMaxVelocity(200);
-        targetShip.debugShowVelocity = true;
+        targetShip.setMaxVelocity(maxVelocity);
         //console.log(targetShip.debugShowVelocity);
-        //targetShip.setCollideWorldBounds(true);
+        targetShip.setCollideWorldBounds(true);
 
-        seekingShip = this.physics.add.image(200, 100, "arrow");
+        seekingShip = this.physics.add.image(0, 300, "ship");
         seekingShip.setDamping(true);
         seekingShip.setDrag(0.99);
-        seekingShip.setMaxVelocity(200);
-        //seekingShip.setCollideWorldBounds(true);
+        seekingShip.setMaxVelocity(maxVelocity);
+        seekingShip.setCollideWorldBounds(true);
 
         cursors = this.input.keyboard.createCursorKeys();
       }
@@ -65,7 +65,7 @@
         if (cursors.up.isDown) {
           this.physics.velocityFromRotation(
             targetShip.rotation,
-            200,
+            maxVelocity,
             targetShip.body.acceleration
           );
         } else {
@@ -80,39 +80,126 @@
           targetShip.setAngularVelocity(0);
         }
 
-        //var vectorVel = new Phaser.Math.Vector2(100, 100);
-        //seekingShip.body.setVelocity(100, 0);
-        seek(seekingShip,targetShip);
+        //seek(seekingShip, targetShip);
+        //flee(seekingShip, targetShip);
+        arrive(seekingShip, targetShip);
+
         //text.setText("Speed: " + targetShip.body.speed);
 
-        this.physics.world.wrap(targetShip, 32);
+        //this.physics.world.wrap(targetShip, 0);
+        //this.physics.world.wrap(seekingShip, 0);
       }
 
       function seek(pVehicle, pTarget) {
-          
-           var vectorDesired;
-           // 1. vector(desired velocity) = (target position) - (vehicle position) 
-           vectorDesired= pTarget.body.position.subtract(pVehicle.body.position);
-           // 2. normalize vector(desired velocity)
-           vectorDesired.normalize();
-           // 3. scale vector(desired velocity) to maximum speed
-           vectorDesired.scale(200);
-           // 4. vector(steering force) = vector(desired velocity) - vector(current velocity)
-           var vectorSteering = vectorDesired.subtract(pVehicle.body.velocity);
-           // 5. limit the magnitude of vector(steering force) to maximum force
-           //vectorSteering.scale(200);
-           // 6. vector(new velocity) = vector(current velocity) + vector(steering force)
-           pVehicle.setVelocity(vectorSteering.x, vectorSteering.y);
-           // 7. limit the magnitude of vector(new velocity) to maximum speed
-           //pVehicle.body.velocity.scale(200);
-           // 8. update vehicle rotation according to the angle of the vehicle velocity
-            
-           var angle=pVehicle.body.velocity.angle();
-           //const angle = Phaser.Math.DegToRad(pVehicle.body.rotation - 90);
+        var vectorDesired;
+        // 1. vector(desired velocity) = (target position) - (vehicle position)
+        vectorDesired = pTarget.body.position.subtract(pVehicle.body.position);
+        // 2. normalize vector(desired velocity)
+        vectorDesired.normalize();
+        // 3. scale vector(desired velocity) to maximum speed
+        vectorDesired.scale(maxVelocity);
+        // 4. vector(steering force) = vector(desired velocity) - vector(current velocity)
+        var vectorSteering = vectorDesired.subtract(pVehicle.body.velocity);
+        // 5. limit the magnitude of vector(steering force) to maximum force
+        //vectorSteering.scale(200);
+        // 6. vector(new velocity) = vector(current velocity) + vector(steering force)
+        truncate(vectorSteering.add(pVehicle.body.velocity), maxVelocity);
+        pVehicle.setVelocity(vectorSteering.x, vectorSteering.y);
+        // 7. limit the magnitude of vector(new velocity) to maximum speed
+        //pVehicle.body.velocity.scale(200);
+        // 8. update vehicle rotation according to the angle of the vehicle velocity
 
-           
-           pVehicle.rotation = angle;
-           pVehicle.body.world.scene.physics.velocityFromRotation(angle, pVehicle.speed, pVehicle.body.velocity);
+        var angle = pVehicle.body.velocity.angle();
+        //const angle = Phaser.Math.DegToRad(pVehicle.body.rotation - 90);
+
+        pVehicle.rotation = angle;
+        pVehicle.body.world.scene.physics.velocityFromRotation(
+          angle,
+          pVehicle.body.velocity.length(),
+          pVehicle.body.velocity
+        );
+      }
+
+      function flee(pVehicle, pTarget) {
+        var vectorDesired;
+        // 1. vector(desired velocity) = (target position) - (vehicle position)
+        vectorDesired = pTarget.body.position.subtract(pVehicle.body.position);
+        // 2. normalize vector(desired velocity)
+        vectorDesired.normalize();
+        // 3. scale vector(desired velocity) to maximum speed
+        vectorDesired.scale(maxVelocity);
+        // 4. negate seek vector
+        vectorDesired.negate();
+        // 5. vector(steering force) = vector(desired velocity) - vector(current velocity)
+        var vectorSteering = vectorDesired.subtract(pVehicle.body.velocity);
+
+        // 6. limit the magnitude of vector(steering force) to maximum force
+        //vectorSteering.scale(200);
+        // 7. vector(new velocity) = vector(current velocity) + vector(steering force)
+        pVehicle.setVelocity(vectorSteering.x, vectorSteering.y);
+        // 8. limit the magnitude of vector(new velocity) to maximum speed
+        //pVehicle.body.velocity.scale(200);
+        // 9. update vehicle rotation according to the angle of the vehicle velocity
+
+        var angle = pVehicle.body.velocity.angle();
+        //const angle = Phaser.Math.DegToRad(pVehicle.body.rotation - 90);
+
+        pVehicle.rotation = angle;
+        pVehicle.body.world.scene.physics.velocityFromRotation(
+          angle,
+          pVehicle.speed,
+          pVehicle.body.velocity
+        );
+      }
+
+      function arrive(pVehicle, pTarget) {
+        var vectorDesired;
+        var distanceToTarget;
+        var slowingRadius = 400;
+        // 1. vector(desired velocity) = (target position) - (vehicle position)
+        vectorDesired = pTarget.body.position.subtract(pVehicle.body.position);
+
+        distanceToTarget = vectorDesired.length();
+
+        if (distanceToTarget < slowingRadius) {
+          vectorDesired
+            .normalize()
+            .scale(maxVelocity)
+            .scale(distanceToTarget / slowingRadius);
+        } else {
+          vectorDesired.normalize().scale(maxVelocity);
+        }
+
+        // 5. vector(steering force) = vector(desired velocity) - vector(current velocity)
+        var vectorSteering = vectorDesired.subtract(pVehicle.body.velocity);
+
+        // 6. limit the magnitude of vector(steering force) to maximum force
+        //vectorSteering.scale(200);
+        // 7. vector(new velocity) = vector(current velocity) + vector(steering force)
+        truncate(vectorSteering.add(pVehicle.body.velocity), maxVelocity);
+        pVehicle.setVelocity(vectorSteering.x, vectorSteering.y);
+        // 8. limit the magnitude of vector(new velocity) to maximum speed
+        //pVehicle.body.velocity.scale(200);
+        // 9. update vehicle rotation according to the angle of the vehicle velocity
+
+        var angle = pVehicle.body.velocity.angle();
+        //const angle = Phaser.Math.DegToRad(pVehicle.body.rotation - 90);
+
+        pVehicle.rotation = angle;
+        pVehicle.body.world.scene.physics.velocityFromRotation(
+          angle,
+          pVehicle.body.velocity.length(),
+          pVehicle.body.velocity
+        );
+      }
+
+      function truncate(vector, max) {
+        var i;
+        i = max / vector.length();
+        if (i > 1.0) {
+          i = 1.0;
+        }
+        vector.scale(i);
       }
     </script>
   </body>
