@@ -38,56 +38,71 @@
         this.load.image("bullet", "assets/sprites/purple_ball.png");
       }
 
-      var targetShip;
-      var seekingShip;
+      var naveManual;
+      var naveAgente;
       var cursors;
       var maxVelocity = 200;
 
       function create() {
-        targetShip = this.physics.add.image(800, 300, "ship");
-        targetShip.setDamping(true);
-        targetShip.setDrag(0.99);
-        targetShip.setMaxVelocity(maxVelocity);
-        //console.log(targetShip.debugShowVelocity);
-        targetShip.setCollideWorldBounds(true);
+        naveManual = this.physics.add.image(800, 300, "ship");
+        naveManual.setDamping(true);
+        naveManual.setDrag(0.99);
+        naveManual.setMaxVelocity(maxVelocity);
+        //console.log(naveManual.debugShowVelocity);
+        naveManual.setCollideWorldBounds(true);
 
-        seekingShip = this.physics.add.image(0, 300, "ship");
-        seekingShip.setDamping(true);
-        seekingShip.setDrag(0.99);
-        seekingShip.setMaxVelocity(maxVelocity);
-        seekingShip.setCollideWorldBounds(true);
+        naveAgente = this.physics.add.image(300, 300, "ship");
+        naveAgente.setDamping(true);
+        naveAgente.setDrag(0.99);
+        naveAgente.setMaxVelocity(maxVelocity);
+        naveAgente.setCollideWorldBounds(true);
 
         cursors = this.input.keyboard.createCursorKeys();
       }
 
       function update() {
-        //console.log(targetShip.body.velocity);
+        //Actualizamos la nave manejada por el usuario
         if (cursors.up.isDown) {
           this.physics.velocityFromRotation(
-            targetShip.rotation,
+            naveManual.rotation,
             maxVelocity,
-            targetShip.body.acceleration
+            naveManual.body.acceleration
           );
         } else {
-          targetShip.setAcceleration(0);
+          naveManual.setAcceleration(0);
         }
 
         if (cursors.left.isDown) {
-          targetShip.setAngularVelocity(-300);
+          naveManual.setAngularVelocity(-300);
         } else if (cursors.right.isDown) {
-          targetShip.setAngularVelocity(300);
+          naveManual.setAngularVelocity(300);
         } else {
-          targetShip.setAngularVelocity(0);
+          naveManual.setAngularVelocity(0);
         }
 
-        //seek(seekingShip, targetShip);
-        //flee(seekingShip, targetShip);
-        arrive(seekingShip, targetShip);
+        //seek(naveAgente, naveManual);
+        //flee(naveAgente, naveManual);
+        //arrive(naveAgente, naveManual);
+        wander(naveAgente);
 
-        //text.setText("Speed: " + targetShip.body.speed);
+        /*
+              var alignment = computeAlignment(naveAgente, [naveManual]);
+              var cohesion = computeCohesion(naveAgente, [naveManual]);
+              var separation = computeSeparation(naveAgente, [naveManual]);
+              var aux = alignment.add(cohesion.add(separation));
+              aux.scale(100);
+              naveAgente.setVelocity(aux.x, aux.y);
+              var angle = naveAgente.body.velocity.angle();
+              naveAgente.rotation = angle;
+              naveAgente.body.world.scene.physics.velocityFromRotation(
+                angle,
+                naveAgente.body.velocity.length(),
+                naveAgente.body.velocity
+              );
+              console.log(naveAgente.body.velocity);*/
 
-        //this.physics.world.wrap(targetShip, 0);
-        //this.physics.world.wrap(seekingShip, 0);
+        //this.physics.world.wrap(naveManual, 0);
+        //this.physics.world.wrap(naveAgente, 0);
       }
 
       function seek(pVehicle, pTarget) {
@@ -193,6 +208,54 @@
         );
       }
 
+      function wander(pVehicle) {
+        const CIRCLE_DISTANCE = 150; // Distancia desde la nave hasta el centro del circulo
+        const CIRCLE_RADIUS = 15; // Radio del circulo
+        const ANGLE_CHANGE = 15;
+        var circleCenter = pVehicle.body.velocity
+          .clone()
+          .normalize()
+          .scale(CIRCLE_DISTANCE);
+
+        //console.log("circleCenter");
+        //console.log(circleCenter);
+
+        var xInicial = Math.random() < 0.5 ? 0 : 1;
+        var yInicial = Math.random() < 0.5 ? 0 : 1;
+
+        var displacement = new Phaser.Math.Vector2(1, 1);
+        displacement.scale(CIRCLE_RADIUS);
+
+        var wanderAngle = 0;
+        wanderAngle += Math.random() * ANGLE_CHANGE - ANGLE_CHANGE * 0.5;
+        setAngle(displacement, wanderAngle);
+
+        //console.log(wanderAngle);
+        //console.log(displacement);
+
+        var wanderForce = circleCenter.add(displacement);
+
+        //console.log(wanderForce);
+
+        truncate(wanderForce, maxVelocity);
+        pVehicle.setVelocity(wanderForce.x, wanderForce.y);
+
+        var angle = pVehicle.body.velocity.angle();
+
+        pVehicle.rotation = angle;
+        pVehicle.body.world.scene.physics.velocityFromRotation(
+          angle,
+          pVehicle.body.velocity.length(),
+          pVehicle.body.velocity
+        );
+      }
+
+      function setAngle(vector, value) {
+        var len = vector.length();
+        vector.x = Math.cos(value) * len;
+        vector.y = Math.sin(value) * len;
+      }
+
       function truncate(vector, max) {
         var i;
         i = max / vector.length();
@@ -200,6 +263,94 @@
           i = 1.0;
         }
         vector.scale(i);
+      }
+
+      function computeAlignment(miAgente, agentes) {
+        //console.log(lider);
+        //console.log(agentes);
+        var vectorAlignment = new Phaser.Math.Vector2(0, 0);
+        var vecinos = 0;
+        for (var agente of agentes) {
+          if (agente != miAgente) {
+            var vectorDistancia = miAgente.body.position.subtract(
+              agente.body.position
+            );
+            distanceToTarget = vectorDistancia.length();
+            //console.log(distanceToTarget);
+            if (distanceToTarget < 300) {
+              vectorAlignment.x += agente.body.velocity.x;
+              vectorAlignment.y += agente.body.velocity.y;
+              vecinos++;
+            }
+          }
+        }
+        if (vecinos == 0) {
+          return vectorAlignment;
+        }
+
+        //console.log(vectorAlignment);
+        vectorAlignment.x /= vecinos;
+        vectorAlignment.y /= vecinos;
+        vectorAlignment.normalize();
+
+        return vectorAlignment;
+      }
+
+      function computeCohesion(miAgente, agentes) {
+        var vectorAlignment = new Phaser.Math.Vector2(0, 0);
+        var vecinos = 0;
+        for (var agente of agentes) {
+          if (agente != miAgente) {
+            var vectorDistancia = miAgente.body.position.subtract(
+              agente.body.position
+            );
+            distanceToTarget = vectorDistancia.length();
+            if (distanceToTarget < 300) {
+              vectorAlignment.x += agente.body.x;
+              vectorAlignment.y += agente.body.y;
+              vecinos++;
+            }
+          }
+        }
+        if (vecinos == 0) {
+          return vectorAlignment;
+        }
+
+        vectorAlignment.x /= vecinos;
+        vectorAlignment.y /= vecinos;
+        vectorAlignment = new Phaser.Math.Vector2(
+          vectorAlignment.x - miAgente.body.x,
+          vectorAlignment.y - miAgente.body.y
+        );
+        vectorAlignment.normalize();
+        return vectorAlignment;
+      }
+
+      function computeSeparation(miAgente, agentes) {
+        var vectorAlignment = new Phaser.Math.Vector2(0, 0);
+        var vecinos = 0;
+        for (var agente of agentes) {
+          if (agente != miAgente) {
+            var vectorDistancia = miAgente.body.position.subtract(
+              agente.body.position
+            );
+            distanceToTarget = vectorDistancia.length();
+            if (distanceToTarget < 300) {
+              vectorAlignment.x += agente.body.x - miAgente.body.x;
+              vectorAlignment.y += agente.body.y - miAgente.body.y;
+              vecinos++;
+            }
+          }
+        }
+        if (vecinos == 0) {
+          return vectorAlignment;
+        }
+
+        vectorAlignment.x /= vecinos;
+        vectorAlignment.y /= vecinos;
+        vectorAlignment.negate();
+        vectorAlignment.normalize();
+        return vectorAlignment;
       }
     </script>
   </body>
