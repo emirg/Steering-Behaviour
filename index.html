@@ -40,18 +40,25 @@
       //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% preload %%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
       function preload() {
         //this.load.setBaseURL("http://labs.phaser.io");
-        this.load.image('sky', 'assets/images/space3.png');
-        this.load.spritesheet("ship", "assets/games/asteroids/ship.png", { frameWidth: 32, frameHeight: 32 });
-        this.load.spritesheet("ship1", "assets/sprites/ship3.png", { frameWidth: 21, frameHeight: 28 });
+        this.load.image("sky", "assets/images/space3.png");
+        this.load.spritesheet("ship", "assets/games/asteroids/ship.png", {
+          frameWidth: 32,
+          frameHeight: 32
+        });
+        this.load.spritesheet("ship1", "assets/sprites/ship3.png", {
+          frameWidth: 21,
+          frameHeight: 28
+        });
         this.load.image("arrow", "assets/sprites/arrow.png");
-        this.load.spritesheet('coin', 'assets/sprites/coin.png', { frameWidth: 32, frameHeight: 32 });
-
+        this.load.spritesheet("coin", "assets/sprites/coin.png", {
+          frameWidth: 32,
+          frameHeight: 32
+        });
       }
       // %%%%%%%%%%%%%%%%%%%%%%%% create %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       function create() {
-
-        //background 
-        this.add.image(400, 300, 'sky');
+        //background
+        this.add.image(400, 300, "sky");
 
         naveManual = this.physics.add.sprite(800, 300, "ship1");
         naveManual.setDamping(true);
@@ -69,25 +76,28 @@
         cursors = this.input.keyboard.createCursorKeys();
 
         //  The score
-       scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: 'green' });
+        scoreText = this.add.text(16, 16, "score: 0", {
+          fontSize: "32px",
+          fill: "green"
+        });
 
-       coins = this.physics.add.sprite(100, 450, 'coin');
+        coins = this.physics.add.sprite(100, 450, "coin");
 
-       coins.setCollideWorldBounds(true);
+        coins.setCollideWorldBounds(true);
 
-       this.anims.create({
-        key: 'efectoMoneda',
-        frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 5 }),
-        frameRate: 10,
-        repeat: -1
-       });
-    this.physics.add.overlap(naveManual, coins,collectCoins, null, this);
+        this.anims.create({
+          key: "efectoMoneda",
+          frames: this.anims.generateFrameNumbers("coin", { start: 0, end: 5 }),
+          frameRate: 10,
+          repeat: -1
+        });
+        this.physics.add.overlap(naveManual, coins, collectCoins, null, this);
 
-    this.physics.add.collider(naveManual, naveAgente, hitShip, null, this);
+        this.physics.add.collider(naveManual, naveAgente, hitShip, null, this);
       }
 
       function update() {
-        coins.anims.play('efectoMoneda',true);
+        coins.anims.play("efectoMoneda", true);
         //Actualizamos la nave manejada por el usuario
         if (cursors.up.isDown) {
           this.physics.velocityFromRotation(
@@ -100,9 +110,9 @@
         }
 
         if (cursors.left.isDown) {
-          naveManual.setAngularVelocity(-300);
+          naveManual.setAngularVelocity(-200);
         } else if (cursors.right.isDown) {
-          naveManual.setAngularVelocity(300);
+          naveManual.setAngularVelocity(200);
         } else {
           naveManual.setAngularVelocity(0);
         }
@@ -113,38 +123,48 @@
         //wander(naveAgente);
 
         /*
-              var alignment = computeAlignment(naveAgente, [naveManual]);
-              var cohesion = computeCohesion(naveAgente, [naveManual]);
-              var separation = computeSeparation(naveAgente, [naveManual]);
-              var aux = alignment.add(cohesion.add(separation));
-              aux.scale(100);
-              naveAgente.setVelocity(aux.x, aux.y);
-              var angle = naveAgente.body.velocity.angle();
-              naveAgente.rotation = angle;
-              naveAgente.body.world.scene.physics.velocityFromRotation(
-                angle,
-                naveAgente.body.velocity.length(),
-                naveAgente.body.velocity
-              );
-              console.log(naveAgente.body.velocity);*/
+                    var alignment = computeAlignment(naveAgente, [naveManual]);
+                    var cohesion = computeCohesion(naveAgente, [naveManual]);
+                    var separation = computeSeparation(naveAgente, [naveManual]);
+                    var aux = alignment.add(cohesion.add(separation));
+                    aux.scale(100);
+                    naveAgente.setVelocity(aux.x, aux.y);
+                    var angle = naveAgente.body.velocity.angle();
+                    naveAgente.rotation = angle;
+                    naveAgente.body.world.scene.physics.velocityFromRotation(
+                      angle,
+                      naveAgente.body.velocity.length(),
+                      naveAgente.body.velocity
+                    );
+                    console.log(naveAgente.body.velocity);
+                */
 
         //this.physics.world.wrap(naveManual, 0);
         //this.physics.world.wrap(naveAgente, 0);
       }
       //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% fin create %%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
-      function collectCoins (player, coins){
-         //  Add and update the score
+      function collectCoins(player, coins) {
+        //  Add and update the score
         score += 10;
-        scoreText.setText('Score: ' + score);
-        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-        var y = (player.y < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
-        coins.setPosition(x,y);    
-      } 
+        scoreText.setText("Score: " + score);
+        var x =
+          player.x < 400
+            ? Phaser.Math.Between(400, 800)
+            : Phaser.Math.Between(0, 400);
+        var y =
+          player.y < 400
+            ? Phaser.Math.Between(400, 800)
+            : Phaser.Math.Between(0, 400);
+        coins.setPosition(x, y);
+      }
 
-      function hitShip (player, agente){
+      function hitShip(player, agente) {
         this.physics.pause();
         player.setTint(0xff0000);
-        scoreText = this.add.text(250, 250, 'GAME OVER', { fontSize: '64px', fill: 'red' });
+        scoreText = this.add.text(250, 250, "GAME OVER", {
+          fontSize: "64px",
+          fill: "red"
+        });
       }
 
       function seek(pVehicle, pTarget) {
