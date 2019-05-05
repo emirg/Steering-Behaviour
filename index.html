@@ -41,6 +41,9 @@
       function preload() {
         //this.load.setBaseURL("http://labs.phaser.io");
         this.load.image("sky", "assets/images/space3.png");
+        this.load.image("asteroid1", "assets/games/asteroids/asteroid1.png");
+        this.load.image("asteroid2", "assets/games/asteroids/asteroid2.png");
+        this.load.image("asteroid3", "assets/games/asteroids/asteroid3.png");
         this.load.spritesheet("ship", "assets/games/asteroids/ship.png", {
           frameWidth: 32,
           frameHeight: 32
@@ -49,7 +52,6 @@
           frameWidth: 21,
           frameHeight: 28
         });
-        this.load.image("arrow", "assets/sprites/arrow.png");
         this.load.spritesheet("coin", "assets/sprites/coin.png", {
           frameWidth: 32,
           frameHeight: 32
@@ -60,14 +62,42 @@
         //background
         this.add.image(400, 300, "sky");
 
-        naveManual = this.physics.add.sprite(800, 300, "ship1");
+        //  This adjusts the collision body size.
+        //obstaculo.body.setSize(220, 10, 0, 0);
+        asteroide1 = this.physics.add.sprite(300, 200, "asteroid1");
+        asteroide1.setVelocity(-100, 0);
+
+        asteroide2 = this.physics.add.sprite(200, 300, "asteroid2");
+        asteroide2.setVelocity(-100, 0);
+
+        asteroide3 = this.physics.add.sprite(360, 400, "asteroid3");
+        asteroide3.setVelocity(-100, 0);
+
+        asteroide4 = this.physics.add.sprite(100, 100, "asteroid1");
+        asteroide4.setVelocity(-100, 0);
+
+        asteroide5 = this.physics.add.sprite(200, 500, "asteroid2");
+        asteroide5.setVelocity(-100, 0);
+
+        asteroide6 = this.physics.add.sprite(500, 500, "asteroid3");
+        asteroide6.setVelocity(-100, 0);
+        /* asteroides = this.physics.add.group([
+          asteroide1,
+          asteroide2,
+          asteroide3,
+          asteroide4,
+          asteroide5,
+          asteroide6
+        ]);*/
+
+        naveManual = this.physics.add.sprite(400, 300, "ship1");
         naveManual.setDamping(true);
         naveManual.setDrag(0.99);
         naveManual.setMaxVelocity(maxVelocity);
         //console.log(naveManual.debugShowVelocity);
         naveManual.setCollideWorldBounds(true);
 
-        naveAgente = this.physics.add.image(300, 300, "ship");
+        naveAgente = this.physics.add.image(100, 300, "ship");
         naveAgente.setDamping(true);
         naveAgente.setDrag(0.99);
         naveAgente.setMaxVelocity(maxVelocity1);
@@ -94,9 +124,30 @@
         this.physics.add.overlap(naveManual, coins, collectCoins, null, this);
 
         this.physics.add.collider(naveManual, naveAgente, hitShip, null, this);
+
+        asteroide1.body.immovable = true;
+        asteroide2.body.immovable = true;
+        asteroide3.body.immovable = true;
+        asteroide4.body.immovable = true;
+        asteroide5.body.immovable = true;
+        asteroide6.body.immovable = true;
+
+        this.physics.add.collider(naveManual, asteroide1, null, null, this);
+        this.physics.add.collider(naveManual, asteroide2, null, null, this);
+        this.physics.add.collider(naveManual, asteroide3, null, null, this);
+        this.physics.add.collider(naveManual, asteroide4, null, null, this);
+        this.physics.add.collider(naveManual, asteroide5, null, null, this);
+        this.physics.add.collider(naveManual, asteroide6, null, null, this);
       }
 
       function update() {
+        this.physics.world.wrap(asteroide1, 0);
+        this.physics.world.wrap(asteroide2, 0);
+        this.physics.world.wrap(asteroide3, 0);
+        this.physics.world.wrap(asteroide4, 0);
+        this.physics.world.wrap(asteroide5, 0);
+        this.physics.world.wrap(asteroide6, 0);
+
         coins.anims.play("efectoMoneda", true);
         //Actualizamos la nave manejada por el usuario
         if (cursors.up.isDown) {
