@@ -29,22 +29,30 @@
       };
 
       var game = new Phaser.Game(config);
-
-      function preload() {
-        this.load.setBaseURL("http://labs.phaser.io");
-
-        this.load.image("ship", "assets/games/asteroids/ship.png");
-        this.load.image("arrow", "assets/sprites/arrow.png");
-        this.load.image("bullet", "assets/sprites/purple_ball.png");
-      }
-
       var naveManual;
       var naveAgente;
       var cursors;
       var maxVelocity = 200;
+      var maxVelocity1 = 100;
+      var coins;
+      var score = 0;
+      var scoreText;
+      //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% preload %%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+      function preload() {
+        //this.load.setBaseURL("http://labs.phaser.io");
+        this.load.image('sky', 'assets/images/space3.png');
+        this.load.spritesheet("ship", "assets/games/asteroids/ship.png", { frameWidth: 32, frameHeight: 32 });
+        this.load.image("arrow", "assets/sprites/arrow.png");
+        this.load.spritesheet('coin', 'assets/sprites/coin.png', { frameWidth: 32, frameHeight: 32 });
 
+      }
+      // %%%%%%%%%%%%%%%%%%%%%%%% create %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       function create() {
-        naveManual = this.physics.add.image(800, 300, "ship");
+
+        //background 
+        this.add.image(400, 300, 'sky');
+
+        naveManual = this.physics.add.sprite(800, 300, "ship");
         naveManual.setDamping(true);
         naveManual.setDrag(0.99);
         naveManual.setMaxVelocity(maxVelocity);
@@ -54,13 +62,31 @@
         naveAgente = this.physics.add.image(300, 300, "ship");
         naveAgente.setDamping(true);
         naveAgente.setDrag(0.99);
-        naveAgente.setMaxVelocity(maxVelocity);
+        naveAgente.setMaxVelocity(maxVelocity1);
         naveAgente.setCollideWorldBounds(true);
 
         cursors = this.input.keyboard.createCursorKeys();
+
+        //  The score
+       scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: 'green' });
+
+       coins = this.physics.add.sprite(100, 450, 'coin');
+
+       coins.setCollideWorldBounds(true);
+
+       this.anims.create({
+        key: 'efectoMoneda',
+        frames: this.anims.generateFrameNumbers('coin', { start: 0, end: 5 }),
+        frameRate: 10,
+        repeat: -1
+       });
+    this.physics.add.overlap(naveManual, coins,collectCoins, null, this);
+
+    this.physics.add.collider(naveManual, naveAgente, hitShip, null, this);
       }
 
       function update() {
+        coins.anims.play('efectoMoneda',true);
         //Actualizamos la nave manejada por el usuario
         if (cursors.up.isDown) {
           this.physics.velocityFromRotation(
@@ -80,10 +106,10 @@
           naveManual.setAngularVelocity(0);
         }
 
-        //seek(naveAgente, naveManual);
+        seek(naveAgente, naveManual);
         //flee(naveAgente, naveManual);
         //arrive(naveAgente, naveManual);
-        wander(naveAgente);
+        //wander(naveAgente);
 
         /*
               var alignment = computeAlignment(naveAgente, [naveManual]);
@@ -103,6 +129,21 @@
 
         //this.physics.world.wrap(naveManual, 0);
         //this.physics.world.wrap(naveAgente, 0);
+      }
+      //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% fin create %%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+      function collectCoins (player, coins){
+         //  Add and update the score
+        score += 10;
+        scoreText.setText('Score: ' + score);
+        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+        var y = (player.y < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+        coins.setPosition(x,y);    
+      } 
+
+      function hitShip (player, agente){
+        this.physics.pause();
+        player.setTint(0xff0000);
+        scoreText = this.add.text(250, 250, 'GAME OVER', { fontSize: '64px', fill: 'red' });
       }
 
       function seek(pVehicle, pTarget) {
