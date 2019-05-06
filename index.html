@@ -97,16 +97,28 @@
         //console.log(naveManual.debugShowVelocity);
         naveManual.setCollideWorldBounds(true);
 
-        naveAgente = this.physics.add.image(100, 300, "ship");
-        naveAgente.setDamping(true);
-        naveAgente.setDrag(0.99);
-        naveAgente.setMaxVelocity(maxVelocity1);
-        naveAgente.setCollideWorldBounds(true);
+        naveAgente1 = this.physics.add.image(50, 250, "ship");
+        naveAgente1.setDamping(true);
+        naveAgente1.setDrag(0.99);
+        naveAgente1.setMaxVelocity(maxVelocity1);
+        naveAgente1.setCollideWorldBounds(true);
+
+        naveAgente2 = this.physics.add.image(100, 300, "ship");
+        naveAgente2.setDamping(true);
+        naveAgente2.setDrag(0.99);
+        naveAgente2.setMaxVelocity(maxVelocity1);
+        naveAgente2.setCollideWorldBounds(true);
+
+        naveAgente3 = this.physics.add.image(50, 350, "ship");
+        naveAgente3.setDamping(true);
+        naveAgente3.setDrag(0.99);
+        naveAgente3.setMaxVelocity(maxVelocity1);
+        naveAgente3.setCollideWorldBounds(true);
 
         cursors = this.input.keyboard.createCursorKeys();
 
         //  The score
-        scoreText = this.add.text(16, 16, "score: 0", {
+        scoreText = this.add.text(16, 16, "Score: 0", {
           fontSize: "32px",
           fill: "green"
         });
@@ -123,7 +135,9 @@
         });
         this.physics.add.overlap(naveManual, coins, collectCoins, null, this);
 
-        this.physics.add.collider(naveManual, naveAgente, hitShip, null, this);
+        this.physics.add.collider(naveManual, naveAgente1, hitShip, null, this);
+        this.physics.add.collider(naveManual, naveAgente2, hitShip, null, this);
+        this.physics.add.collider(naveManual, naveAgente3, hitShip, null, this);
 
         asteroide1.body.immovable = true;
         asteroide2.body.immovable = true;
@@ -168,32 +182,21 @@
           naveManual.setAngularVelocity(0);
         }
 
-        seek(naveAgente, naveManual);
+        seek(naveAgente2, naveManual);
         //flee(naveAgente, naveManual);
         //arrive(naveAgente, naveManual);
         //wander(naveAgente);
 
-        /*
-                    var alignment = computeAlignment(naveAgente, [naveManual]);
-                    var cohesion = computeCohesion(naveAgente, [naveManual]);
-                    var separation = computeSeparation(naveAgente, [naveManual]);
-                    var aux = alignment.add(cohesion.add(separation));
-                    aux.scale(100);
-                    naveAgente.setVelocity(aux.x, aux.y);
-                    var angle = naveAgente.body.velocity.angle();
-                    naveAgente.rotation = angle;
-                    naveAgente.body.world.scene.physics.velocityFromRotation(
-                      angle,
-                      naveAgente.body.velocity.length(),
-                      naveAgente.body.velocity
-                    );
-                    console.log(naveAgente.body.velocity);
-                */
+        flock(naveAgente1, [naveAgente2, naveAgente3]);
+        flock(naveAgente3, [naveAgente2, naveAgente1]);
+
+        //console.log(naveAgente.body.velocity);
 
         //this.physics.world.wrap(naveManual, 0);
         //this.physics.world.wrap(naveAgente, 0);
       }
       //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% fin create %%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+
       function collectCoins(player, coins) {
         //  Add and update the score
         score += 10;
@@ -360,6 +363,22 @@
           angle,
           pVehicle.body.velocity.length(),
           pVehicle.body.velocity
+        );
+      }
+
+      function flock(nave, vecinos) {
+        var alignment = computeAlignment(nave, vecinos);
+        var cohesion = computeCohesion(nave, vecinos);
+        var separation = computeSeparation(nave, vecinos);
+        var aux = alignment.add(cohesion.add(separation));
+        aux.scale(100);
+        nave.setVelocity(aux.x, aux.y);
+        var angle = nave.body.velocity.angle();
+        nave.rotation = angle;
+        nave.body.world.scene.physics.velocityFromRotation(
+          angle,
+          nave.body.velocity.length(),
+          nave.body.velocity
         );
       }
 
